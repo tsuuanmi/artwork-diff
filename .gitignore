@@ -1,0 +1,20 @@
+# Python and tools
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+.pytest_cache/
+.coverage
+build/
+dist/
+
+# Generated comparison outputs
+artwork-diff-report/
+demo/
+reports/
+
+# By default, do not accidentally publish customer artwork.
+*.pdf
+*.ai
+customer-files/
+private-data/

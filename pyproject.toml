@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "artwork-diff"
+version = "0.2.0"
+description = "Experimental vector-aware PDF comparison for approved vs production artwork"
+readme = "README.md"
+requires-python = ">=3.11"
+license = {file = "LICENSE"}
+authors = [{name = "Artwork Diff contributors"}]
+dependencies = [
+  "pdfplumber>=0.11,<1",
+  "pypdfium2>=4.30,<6",
+  "numpy>=1.25,<3",
+  "scipy>=1.11,<2",
+  "Pillow>=10,<13",
+]
+
+[project.optional-dependencies]
+dev = ["reportlab>=4,<5"]
+
+[project.scripts]
+artwork-diff = "artwork_diff.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
