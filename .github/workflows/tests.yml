@@ -8,14 +8,15 @@ jobs:
   unit-tests:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         python-version: ["3.11", "3.12", "3.13"]
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: astral-sh/setup-uv@18d369b23da25a81e9458561248e1aafff6a70fa # v10.3.1
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Install package and test dependencies
-        run: python -m pip install -e '.[dev]'
+      - name: Sync CLI, API and test dependencies
+        run: uv sync --extra api --extra dev
       - name: Run tests
-        run: python -m unittest discover -s tests -v
+        run: uv run python -m unittest discover -s tests -v
