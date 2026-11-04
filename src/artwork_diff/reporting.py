@@ -279,7 +279,8 @@ small,.muted,.foot {{ font-size:11px; color:#657183; }}
 button {{ border:1px solid #b4c0d2; background:white; padding:8px 11px; border-radius:4px; cursor:pointer; font-weight:650; white-space:nowrap; }}
 button[aria-pressed="true"] {{ background:#eaf3ff; }}
 .focus-block {{ border-top:1px solid #e1e5eb; padding:10px 0 12px; }}
-.focus-artwork {{ display:flex; align-items:center; justify-content:center; min-height:120px; }}
+.focus-artwork {{ display:flex; align-items:center; justify-content:center; height:230px; overflow:hidden; }}
+.focus-artwork img {{ width:100%; height:100%; object-fit:contain; }}
 .quote {{ font-size:12px; margin:6px 0; color:#35445b; overflow-wrap:anywhere; }}
 .num {{ background:#e9edf5; padding:3px 7px; border-radius:4px; margin-right:6px; }}
 .foot {{ margin-top:25px; }}
