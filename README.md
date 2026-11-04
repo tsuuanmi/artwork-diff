@@ -71,15 +71,15 @@ Open the interactive [Swagger/OpenAPI docs](http://127.0.0.1:8000/docs) on your 
 | Method | Endpoint | Result |
 | --- | --- | --- |
 | `GET` | `/health` | Health check |
-| `POST` | `/v1/compare` | JSON with object-level differences and optional ink/content audit |
-| `POST` | `/v1/compare/report` | Self-contained side-by-side HTML report |
+| `POST` | `/v1/compare` | **HTML report (default)**, with grouped colors and focused changes |
+| `POST` | `/v1/compare/json` | Raw object-level JSON differences and optional ink/content audit |
 
-Both POST endpoints accept `multipart/form-data` fields `approved` and `production` (PDF files), plus optional numeric `tolerance_mm` (default `0.05`) and `match_radius_pt` (default `10`). `/v1/compare` additionally accepts `include_ink_audit` (default `true`).
+All comparison endpoints accept `multipart/form-data` fields `approved` and `production` (PDF files), plus optional numeric `tolerance_mm` (default `0.05`) and `match_radius_pt` (default `10`). `/v1/compare/json` additionally accepts `include_ink_audit` (default `true`).
 
-### JSON example
+### JSON API example (optional)
 
 ```sh
-curl -sS -X POST http://127.0.0.1:8000/v1/compare \
+curl -sS -X POST http://127.0.0.1:8000/v1/compare/json \
   -F 'approved=@approved.pdf;type=application/pdf' \
   -F 'production=@production.pdf;type=application/pdf' \
   -F 'include_ink_audit=true' \
@@ -91,13 +91,13 @@ The response contains `status` (`REVIEW_REQUIRED` or `NO_DIFFERENCES_IN_COVERED_
 ### HTML report example
 
 ```sh
-curl -sS -X POST http://127.0.0.1:8000/v1/compare/report \
+curl -sS -X POST http://127.0.0.1:8000/v1/compare \
   -F 'approved=@approved.pdf;type=application/pdf' \
   -F 'production=@production.pdf;type=application/pdf' \
   -o comparison.html
 ```
 
-The generated HTML embeds both page previews, allowing it to be saved and opened later without an active API server. It highlights raw object findings from the primary comparator; the grouped `ink_audit` is available in the JSON response.
+The generated HTML embeds both page previews, allowing it to be saved and opened later without an active API server. The visual report groups repeated palette replacements into one row and automatically zooms in on content/geometry changes. The raw per-object evidence remains available at `/v1/compare/json`. Use `POST /v1/compare/report` only as a backwards-compatible HTML alias.
 
 ### Input validation and deployment safety
 
@@ -130,7 +130,7 @@ For remote/internal network use, place the API behind an authenticated HTTPS rev
 ```text
 src/artwork_diff/core.py       PDF object extraction and matching
 src/artwork_diff/cli.py        CLI and JSON/HTML report orchestration
-src/artwork_diff/reporting.py  Self-contained HTML report
+src/artwork_diff/reporting.py  Self-contained grouped HTML report
 src/artwork_diff/ink_audit.py  CMYK/text audit and spot/clipping metadata
 src/artwork_diff/api.py        FastAPI application (optional API extra)
 tests/                         Synthetic regression and API tests

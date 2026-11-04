@@ -30,7 +30,7 @@ app = FastAPI(
         "Experimental object-level PDF comparison. Results are not a print-production "
         "certification; human prepress review is required."
     ),
-    version="0.3.0",
+    version="0.4.0",
 )
 
 
@@ -86,7 +86,7 @@ def health() -> dict[str, str]:
     return {"status": "ok", "service": "artwork-diff"}
 
 
-@app.post("/v1/compare", dependencies=[Depends(_authorize)], tags=["compare"])
+@app.post("/v1/compare/json", dependencies=[Depends(_authorize)], tags=["compare"])
 async def compare_pdfs(
     approved: Annotated[UploadFile, File(description="Customer-approved PDF")],
     production: Annotated[UploadFile, File(description="Production PDF")],
@@ -104,7 +104,8 @@ async def compare_pdfs(
         return result
 
 
-@app.post("/v1/compare/report", dependencies=[Depends(_authorize)], response_class=HTMLResponse, tags=["compare"])
+@app.post("/v1/compare", dependencies=[Depends(_authorize)], response_class=HTMLResponse, tags=["compare"])
+@app.post("/v1/compare/report", dependencies=[Depends(_authorize)], response_class=HTMLResponse, tags=["compare"], include_in_schema=False)
 async def compare_report(
     approved: Annotated[UploadFile, File(description="Customer-approved PDF")],
     production: Annotated[UploadFile, File(description="Production PDF")],

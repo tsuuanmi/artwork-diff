@@ -1,6 +1,6 @@
 # Artwork Diff HTTP API
 
-**Status: experimental (v0.3.0).** The API is a stateless wrapper around the same PDF comparison and CMYK/text audit engines as the CLI.
+**Status: experimental (v0.4.0).** The API is a stateless wrapper around the same PDF comparison and CMYK/text audit engines as the CLI.
 
 ## Setup
 
@@ -16,10 +16,11 @@ Open `/docs` for interactive FastAPI Swagger UI and `/openapi.json` for the mach
 | Endpoint | Request | Response |
 | --- | --- | --- |
 | `GET /health` | None | `{"status":"ok","service":"artwork-diff"}` |
-| `POST /v1/compare` | Multipart: `approved`, `production`, optional `tolerance_mm`, `match_radius_pt`, `include_ink_audit` | JSON with `status`, `total_differences`, `pages[]`, `limitations`, and optional `ink_audit` |
-| `POST /v1/compare/report` | Multipart: `approved`, `production`, optional `tolerance_mm`, `match_radius_pt` | `text/html` self-contained side-by-side visual review report |
+| `POST /v1/compare` | Multipart: `approved`, `production`, optional `tolerance_mm`, `match_radius_pt` | **`text/html` default:** grouped palette changes, side-by-side overview and focused zoom of content/geometry changes |
+| `POST /v1/compare/json` | Multipart: `approved`, `production`, optional `tolerance_mm`, `match_radius_pt`, `include_ink_audit` | JSON with `status`, `total_differences`, `pages[]`, `limitations`, optional `ink_audit` |
+| `POST /v1/compare/report` | Same fields as `/v1/compare` | Backwards-compatible HTML alias |
 
-Both PDF uploads are required. Default numeric thresholds: `tolerance_mm=0.05`, `match_radius_pt=10`; allowed ranges `(0, 5]` mm and `(0, 100]` pt, respectively. `include_ink_audit=true` is the default for JSON comparisons.
+Both PDF uploads are required. Default numeric thresholds: `tolerance_mm=0.05`, `match_radius_pt=10`; allowed ranges `(0, 5]` mm and `(0, 100]` pt, respectively. `include_ink_audit=true` is the default for `/v1/compare/json`.
 
 A comparison mismatch is a successful execution and therefore HTTP **200** with `status=REVIEW_REQUIRED`, not HTTP 409/422. Invalid PDFs return HTTP 422, too-large uploads HTTP 413, missing/invalid API keys HTTP 401, and invalid parameters HTTP 422.
 
@@ -30,15 +31,17 @@ curl -X POST 'http://127.0.0.1:8000/v1/compare' \
   -F 'approved=@approved.pdf;type=application/pdf' \
   -F 'production=@production.pdf;type=application/pdf' \
   -F 'include_ink_audit=true' \
-  -o diff.json
+  -o report.html
 ~~~
 
 ~~~sh
-curl -X POST 'http://127.0.0.1:8000/v1/compare/report' \
+curl -X POST 'http://127.0.0.1:8000/v1/compare/json' \
   -F 'approved=@approved.pdf;type=application/pdf' \
   -F 'production=@production.pdf;type=application/pdf' \
-  -o report.html
+  -o diff.json
 ~~~
+
+A raw object finding is not the same as a human review issue. The HTML groups pure color-only modifications by palette replacement (e.g. 528 objects → one change group), while nearby text/geometry differences form focused review regions. The JSON endpoint retains every raw finding.
 
 ## Operational and security notes
 

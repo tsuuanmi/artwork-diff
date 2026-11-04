@@ -43,7 +43,7 @@ class TestAPI(TestCase):
         self.assertEqual(self.client.get("/openapi.json").status_code, 200)
 
     def test_compare_same_pdf(self) -> None:
-        response = self.client.post("/v1/compare", files=pdf_files(self.approved, self.approved))
+        response = self.client.post("/v1/compare/json", files=pdf_files(self.approved, self.approved))
         self.assertEqual(response.status_code, 200)
         payload = response.json()
         self.assertEqual(payload["total_differences"], 0)
@@ -53,40 +53,47 @@ class TestAPI(TestCase):
         self.assertNotIn("artwork-diff-", payload["approved_file"])
 
     def test_compare_changed_pdf(self) -> None:
-        response = self.client.post("/v1/compare", files=pdf_files(self.approved, self.changed))
+        response = self.client.post("/v1/compare/json", files=pdf_files(self.approved, self.changed))
         self.assertEqual(response.status_code, 200)
         self.assertGreater(response.json()["total_differences"], 0)
         self.assertIn("ink_audit", response.json())
 
     def test_optional_ink_audit(self) -> None:
         response = self.client.post(
-            "/v1/compare", files=pdf_files(self.approved, self.changed),
+            "/v1/compare/json", files=pdf_files(self.approved, self.changed),
             data={"include_ink_audit": "false"},
         )
         self.assertEqual(response.status_code, 200)
         self.assertNotIn("ink_audit", response.json())
 
     def test_html_report(self) -> None:
-        response = self.client.post("/v1/compare/report", files=pdf_files(self.approved, self.changed))
+        response = self.client.post("/v1/compare", files=pdf_files(self.approved, self.changed))
         self.assertEqual(response.status_code, 200)
         self.assertIn("text/html", response.headers["content-type"])
         self.assertIn("<html", response.text)
+        self.assertIn("COMPARISON REPORT", response.text)
+        self.assertIn("CONTENT &amp; GEOMETRY", response.text)
+
+    def test_html_report_alias(self) -> None:
+        response = self.client.post("/v1/compare/report", files=pdf_files(self.approved, self.changed))
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("text/html", response.headers["content-type"])
 
     def test_upload_validation(self) -> None:
-        response = self.client.post("/v1/compare", files=pdf_files(b"not a pdf", self.approved))
+        response = self.client.post("/v1/compare/json", files=pdf_files(b"not a pdf", self.approved))
         self.assertEqual(response.status_code, 422)
-        response = self.client.post("/v1/compare", files=pdf_files(self.approved, self.changed),
+        response = self.client.post("/v1/compare/json", files=pdf_files(self.approved, self.changed),
                                     data={"tolerance_mm": "-1"})
         self.assertEqual(response.status_code, 422)
 
     def test_upload_limit(self) -> None:
         with patch("artwork_diff.api.MAX_UPLOAD_BYTES", 10):
-            response = self.client.post("/v1/compare", files=pdf_files(self.approved, self.changed))
+            response = self.client.post("/v1/compare/json", files=pdf_files(self.approved, self.changed))
         self.assertEqual(response.status_code, 413)
 
     def test_authentication_when_configured(self) -> None:
         with patch.dict(os.environ, {"ARTWORK_DIFF_API_KEY": "local-secret"}):
-            self.assertEqual(self.client.post("/v1/compare", files=pdf_files(self.approved, self.changed)).status_code, 401)
-            response = self.client.post("/v1/compare", files=pdf_files(self.approved, self.changed),
+            self.assertEqual(self.client.post("/v1/compare/json", files=pdf_files(self.approved, self.changed)).status_code, 401)
+            response = self.client.post("/v1/compare/json", files=pdf_files(self.approved, self.changed),
                                         headers={"X-API-Key": "local-secret"})
             self.assertEqual(response.status_code, 200)
